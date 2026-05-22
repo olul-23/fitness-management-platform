@@ -20,6 +20,8 @@ st.set_page_config(
 )
 
 # ---- 啟動時初始化 DB ----
+# 若資料表不存在則自動建立
+# 避免第一次執行時發生 table not found 錯誤
 init_db()
 
 
@@ -75,7 +77,8 @@ with col_form:
             st.success("個人資料已儲存！")
             st.rerun()
 
-    # 顯示 BMI 作為小回饋
+# 顯示 BMI 作為即時健康指標回饋
+# 幫助使用者快速了解目前體態區間
     if existing:
         h_m = existing["height"] / 100
         bmi = existing["weight"] / (h_m ** 2)
