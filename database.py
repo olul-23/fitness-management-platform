@@ -15,7 +15,8 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-
+# SQLite 檔案路徑（與程式同資料夾）
+# 用 Path 確保跨作業系統可用
 DB_PATH = Path(__file__).parent / "fitness.db"
 
 
@@ -23,8 +24,8 @@ DB_PATH = Path(__file__).parent / "fitness.db"
 def get_conn():
     """Context manager — 自動 commit、自動關閉連線。"""
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # 讓查詢結果可用欄位名存取
-    conn.execute("PRAGMA foreign_keys = ON")
+    conn.row_factory = sqlite3.Row # 讓 query 結果可以用欄位名稱存取（像 dict）
+    conn.execute("PRAGMA foreign_keys = ON") # 啟用 foreign key 約束（SQLite 預設是關閉的）
     try:
         yield conn
         conn.commit()
@@ -91,7 +92,8 @@ def init_db():
 
 
 # ============== 使用者資料 ==============
-
+# 若資料已存在（id=1），則更新而不是新增
+# 避免重複 user profile
 def save_profile(gender: str, age: int, height: float, weight: float, level: str):
     """儲存或更新使用者個人資料（id 固定為 1，單一使用者）。"""
     with get_conn() as conn:
@@ -115,6 +117,14 @@ def get_profile() -> dict | None:
 
 
 # ============== 訓練菜單 ==============
+"""
+建立訓練菜單（含動作清單）
+
+流程：
+1. 建立 menus 主表
+2. 取得 menu_id
+3. 寫入多筆 menu_exercises
+"""
 
 def create_menu(name: str, muscle_groups: list[str], source: str, exercises: list[dict]) -> int:
     """
@@ -188,7 +198,7 @@ def add_record(date: str, exercise_name: str, muscle_group: str,
 
 def list_records(start_date: str | None = None, end_date: str | None = None) -> list[dict]:
     """查詢訓練紀錄。可選日期區間。"""
-    query = "SELECT * FROM training_records"
+    query = "SELECT * FROM training_records"# 動態組 SQL（依照是否有日期條件）
     params = []
     if start_date and end_date:
         query += " WHERE date BETWEEN ? AND ?"
